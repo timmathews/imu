@@ -29,7 +29,7 @@
 #include <linux/i2c-dev.h>
 #include "lsm9ds0.h"
 
-int fd;
+int fd, _g_addr, _xm_addr;
 
 float gyro_scale, accel_scale, mag_scale;
 
@@ -77,6 +77,9 @@ void read_reg(int addr, uint8_t reg, int16_t *a)
 
 void init_imu(char *file, int xm_addr, int g_addr)
 {
+	_xm_addr = xm_addr;
+	_g_addr = g_addr;
+
 	fd = open(file, O_RDWR);
 	if (fd<0) {
 		printf("Unable to open I2C bus!\n");
@@ -141,7 +144,7 @@ void print_header() {
 	for(int i = 0; i < 16; ++i) {
 		printf("%02x ", i);
 	}
-	printf("\n");
+	printf("\n---+");
 	for(int i = 0; i < 16; ++i) {
 		printf("---");
 	}
@@ -151,11 +154,12 @@ void print_header() {
 void dump_registers()
 {
 	printf("LSM9DS0 Registers:\n");
+
+	select_device(_g_addr);
 	printf("Gyroscope Registers:\n");
 	print_header();
-
 	for(uint8_t i = 0; i < 4; ++i) {
-		printf("%02x | ", i);
+		printf("%02x | ", i << 4);
 		for(uint8_t j = 0; j < 16; ++j) {
 			uint8_t r = (i << 4) | j;
 			if(r < 0xf || (r > 0xf && r < 0x20) || r == 0x26 ||
@@ -167,10 +171,14 @@ void dump_registers()
 			uint8_t v = i2c_smbus_read_byte_data(fd, 0x80 | r);
 			printf("%02x ", (unsigned)v);
 		}
+		printf("\n");
 	}
+
+	select_device(_xm_addr);
 	printf("\nAccelerometer Registers:\n");
+	print_header();
 	for(uint8_t i = 0; i < 4; ++i) {
-		printf("%02x | ", i);
+		printf("%02x | ", i << 4);
 		for(uint8_t j = 0; j < 16; ++j) {
 			uint8_t r = (i << 4) | j;
 			if(r < 0x5 || r == 0xe || r == 0x10 || r == 0x11) {
@@ -181,5 +189,6 @@ void dump_registers()
 			uint8_t v = i2c_smbus_read_byte_data(fd, 0x80 | r);
 			printf("%02x ", (unsigned)v);
 		}
+		printf("\n");
 	}
 }

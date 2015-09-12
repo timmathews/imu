@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
 	uint8_t acc_raw[6];
 	uint8_t mag_raw[6];
 
-	init_imu("/dev/i2c-0", 0x6B, 0x10);
+	init_imu("/dev/i2c-1", 0x1D, 0x6B);
 
 	dump_registers();
 
