@@ -29,6 +29,7 @@
 void write_reg(int addr, uint8_t reg, uint8_t value);
 void read_reg(int addr, uint8_t reg, int16_t *a);
 void init_imu(char *file, int xm_addr, int g_addr);
+int read_raw_mag(double *m);
 void dump_registers();
 
 // acceleration due to gravity in m/s^2

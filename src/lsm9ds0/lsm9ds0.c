@@ -139,6 +139,18 @@ void init_imu(char *file, int xm_addr, int g_addr)
 	mag_scale = 0.00048; // for 12 gauss from datasheet, s2.1 p13
 }
 
+int read_raw_mag(double *m) {
+	uint16_t d[3];
+
+	read_reg(_xm_addr, OUT_X_L_M, d);
+	
+	for(int i=0; i<3; ++i) {
+		*(m + i) = *(d + i) * mag_scale;
+	}
+
+	return 0;
+}
+
 void print_header() {
 	printf("   | ");
 	for(int i = 0; i < 16; ++i) {
