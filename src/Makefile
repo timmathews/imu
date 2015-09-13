@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -g3 -std=c99
+CFLAGS := -g3
 LIBS := -lm
 OBJDIR := obj
 
