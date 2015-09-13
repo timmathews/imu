@@ -1,4 +1,27 @@
-SRC =		./src
+TARGET = imu
+
+CC := gcc
+CFLAGS := -g3 -std=gnu99
+LIBS := -lm
+OBJDIR = obj
+VERSION = 0.1
+
+ifeq ($(PREFIX),)
+  PREFIX = /usr
+endif
+
+INSTALL_DIR = $(PREFIX)/bin
+
+SRC = src
+
+VPATH =		src:src/lsm9ds0
+
+SOURCES =	dcm.c \
+		lmath.c \
+		main.c \
+		lsm9ds0.c
+
+OBJS = $(patsubst %,$(OBJDIR)/%,$(SOURCES:.c=.o))
 
 BIN_DIST =	ChangeLog \
 		INSTALL \
@@ -6,24 +29,25 @@ BIN_DIST =	ChangeLog \
 
 SOURCE_DIST = 	Makefile
 
-TARGET = imu
+all: $(OBJS)
+	$(CC) -o $(TARGET) $^ $(CFLAGS) $(LIBS)
 
-VERSION = 0.1
+$(OBJDIR)/%.o: %.c | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-all:
-	$(MAKE) -C $(SRC) -f Makefile
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
-install: all
-	$(MAKE) -C $(SRC) -f Makefile install
+.PHONY: install dist clean
+
+install:
+	install $(TARGET) $(INSTALL_DIR)
 
 dist:
 	mkdir -p $(TARGET)-$(VERSION)
-	$(MAKE) -C $(SRC) -f Makefile dist
 	cp $(BIN_DIST) $(SOURCE_DIST) $(TARGET)-$(VERSION)
 	tar -czf $(TARGET)-$(VERSION).tar.gz $(TARGET)-$(VERSION)
 	rm -rf $(TARGET)-$(VERSION)
 
 clean:
-	$(MAKE) -C $(SRC) -f Makefile clean
-	rm -f *.tar.gz
-	rm $(TARGET)
+	rm -rf $(TARGET) *.tar.gz obj/
