@@ -26,18 +26,13 @@
 
 #include <stdint.h>
 
+float gyro_scale, accel_scale, mag_scale;
+
 void write_reg(int addr, uint8_t reg, uint8_t value);
 void read_reg(int addr, uint8_t reg, int16_t *a);
 void init_imu(char *file, int xm_addr, int g_addr);
 int read_raw_mag(double *m);
 void dump_registers();
-
-// acceleration due to gravity in m/s^2
-#define GRAVITY_MSS 9.80665f
-
-// convert degrees to radians
-#define DEG_TO_RAD 0.017453292519943295769236907684886f
-#define RAD_TO_DEG 57.295779513082320876798154814105f
 
 /** LSM9DS0 Gyro Registers **/
 #define WHO_AM_I_G			 0x0F

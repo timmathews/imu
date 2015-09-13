@@ -28,10 +28,9 @@
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 #include "lsm9ds0.h"
+#include "constants.h"
 
 int fd, _g_addr, _xm_addr;
-
-float gyro_scale, accel_scale, mag_scale;
 
 void select_device(int addr)
 {
@@ -131,21 +130,21 @@ void init_imu(char *file, int xm_addr, int g_addr)
 		CTRL_REG4_G_FS_2000DPS);
 
 	gyro_scale = 0.07; // for 2000dps from datasheet, s2.1 p13
-	gyro_scale *= DEG_TO_RAD;
+	RAD(gyro_scale);
 
 	accel_scale = 0.000732; // for 16g from datasheet, s2.1 p13
-	accel_scale *= GRAVITY_MSS;
+	accel_scale *= GRAVITY;
 
 	mag_scale = 0.00048; // for 12 gauss from datasheet, s2.1 p13
 }
 
 int read_raw_mag(double *m) {
-	uint16_t d[3];
+	int16_t d[3];
 
 	read_reg(_xm_addr, OUT_X_L_M, d);
 	
 	for(int i=0; i<3; ++i) {
-		*(m + i) = *(d + i) * mag_scale;
+		*(m + i) = *(d + i);
 	}
 
 	return 0;
