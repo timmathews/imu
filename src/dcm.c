@@ -17,7 +17,7 @@ double out_matrix[3][3] = {
 	{6, 7, 8}
 };
 
-double temp[3][3] = {0};
+double temp[3][3] = {{0}};
 
 double acc_vector[3] = {0};
 double gyro_vector[3] = {0};
@@ -43,7 +43,7 @@ int renorm(double *in) {
 }
 
 void normalize(void) {
-	double error, normal, t[3][3];
+	double error, normal;
 	int reset = 0;
 	int i = 0;
 
@@ -87,7 +87,7 @@ bailout:
 }
 
 void correct_drift(double heading_x, double heading_y) {
-	double acc_magnitude, acc_weight, integrator_magnitude, tmp;
+	double acc_magnitude, acc_weight, integrator_magnitude;
 	static double scaled_omega_p[3], scaled_omega_i[3];
 
 	/* Roll and Pitch */

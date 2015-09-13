@@ -130,7 +130,7 @@ void init_imu(char *file, int xm_addr, int g_addr)
 		CTRL_REG4_G_FS_2000DPS);
 
 	gyro_scale = 0.07; // for 2000dps from datasheet, s2.1 p13
-	RAD(gyro_scale);
+	gyro_scale = RAD(gyro_scale);
 
 	accel_scale = 0.000732; // for 16g from datasheet, s2.1 p13
 	accel_scale *= GRAVITY;
