@@ -22,7 +22,7 @@ int renorm(double *in);
 void normalize(void);
 void correct_drift(double heading_x, double heading_y);
 void adjust_accel(double ground_speed);
-void update_matrix(double (*read_adc)(int));
+void update_matrix(int (*read_acc)(double *), int (*read_gyr)(double *));
 void euler_angles(double *m);
 double constrain(double x, double min, double max);
 

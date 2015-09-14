@@ -2,7 +2,7 @@ TARGET = imu
 
 CC := gcc
 CFLAGS := -g3 -std=gnu99 -Wall -I./include
-LIBS := -lm
+LIBS := -lm -lrt
 OBJDIR = obj
 VERSION = 0.1
 

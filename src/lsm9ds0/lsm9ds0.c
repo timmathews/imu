@@ -150,6 +150,30 @@ int read_raw_mag(double *m) {
 	return 0;
 }
 
+int read_raw_acc(double *m) {
+	int16_t d[3];
+
+	read_reg(_xm_addr, OUT_X_L_A, d);
+	
+	for(int i=0; i<3; ++i) {
+		*(m + i) = *(d + i);
+	}
+
+	return 0;
+}
+
+int read_raw_gyr(double *m) {
+	int16_t d[3];
+
+	read_reg(_g_addr, OUT_X_L_G, d);
+	
+	for(int i=0; i<3; ++i) {
+		*(m + i) = *(d + i);
+	}
+
+	return 0;
+}
+
 void print_header() {
 	printf("   | ");
 	for(int i = 0; i < 16; ++i) {

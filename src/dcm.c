@@ -142,16 +142,15 @@ void adjust_accel(double ground_speed) {
 	acc_vector[2] -= scale_acc((ground_speed/100) * omega[1]);
 }
 
-void update_matrix(double (*read_adc)(int)) {
+void update_matrix(int (*read_acc)(double *), int (*read_gyr)(double *)) {
 	int x = 0, y = 0;
 
-	gyro_vector[0]=gyro_scaled_x(read_adc(0)); /* gyro x roll */
-	gyro_vector[1]=gyro_scaled_y(read_adc(1)); /* gyro y pitch */
-	gyro_vector[2]=gyro_scaled_z(read_adc(2)); /* gyro Z yaw */
+	read_acc(acc_vector);
+	read_gyr(gyro_vector);
 
-	acc_vector[0]=read_adc(3); /* acc x */
-	acc_vector[1]=read_adc(4); /* acc y */
-	acc_vector[2]=read_adc(5); /* acc z */
+	gyro_vector[0] = gyro_scaled_x(gyro_vector[0]); /* gyro x roll */
+	gyro_vector[1] = gyro_scaled_y(gyro_vector[1]); /* gyro y pitch */
+	gyro_vector[2] = gyro_scaled_z(gyro_vector[2]); /* gyro Z yaw */
 
 	vector_add3(gyro_vector, omega_i, omega); /* add proportional component
 						   */
