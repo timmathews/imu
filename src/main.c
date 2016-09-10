@@ -9,6 +9,13 @@
 #include "lsm9ds0/lsm9ds0.h"
 #include "constants.h"
 
+#define magXmax 550
+#define magYmax 601
+#define magZmax 1069
+#define magXmin -645
+#define magYmin -551
+#define magZmin -477
+
 struct timespec _start_time;
 
 static volatile int quit = 0;
@@ -62,7 +69,8 @@ int main(int argc, char **argv)
 {
         uint64_t time_start, time_elapsed;
 	const struct timespec sleep = {0, 25000000L};
-	double acc[3], gyr[3], mag[3];
+	double acc[3], gyr[3], mag[3], mx, my, mz, hdg, pitch, roll;
+	int use_json = 0;
 
 	/* Register interrupt handler */
 	signal(SIGINT, intHandler);
@@ -78,6 +86,10 @@ int main(int argc, char **argv)
 	if(argc > 1 && strncmp(argv[1], "--reg", 5) == 0) {
 		dump_registers();
 		goto done;
+	}
+
+	if(argc > 1 && strncmp(argv[1], "-j", 2) == 0) {
+		use_json = 1;
 	}
 
 	/* Timer setup. Record start time. */
@@ -101,27 +113,64 @@ int main(int argc, char **argv)
 			read_raw_gyr(gyr); /* Read gyroscope */
 			read_raw_mag(mag); /* Read magnetometer */
 
-			/* Clear screen, move to 0,0 */
-			printf("\033[2J\033[H");
+			if(!use_json) {
+				/* Clear screen, move to 0,0 */
+				printf("\033[2J\033[H");
 
-			print_formatted_values(acc, gyr, mag, "Raw Values");
+				print_formatted_values(acc, gyr, mag, "Raw Values");
+			}
 
 			/* Apply corrections to accelerometer */
 			vector_subtract3(acc, acc_z, acc);
 			vector_multiply3(acc, acc_s, acc);
 
+			pitch = asin(acc[0]); // arcsin(Ax1)
+			roll = asin(acc[1] / -cos(pitch));
+
+			/* Hard iron correction */
+			mag[0] -= (magXmin + magXmax) / 2;
+			mag[1] -= (magYmin + magYmax) / 2;
+			mag[2] -= (magZmin + magZmax) / 2;
+
+			mx = (mag[0] * cos(pitch)) + (mag[2] * sin(pitch));
+			my = (mag[0] * sin(roll) * sin(pitch)) +
+			     (mag[1] * cos(roll)) -
+			     (mag[2] * sin(roll) * cos(pitch));
+
+			hdg = DEG(atan2(my, mx));
+
+			if(hdg < 0) {
+				hdg += 360;
+			}
+
 			/* TODO: Apply corrections to other components */
 
-			print_formatted_values(acc, gyr, mag, "Scaled Values");
+			if(use_json) {
+				/* Output JSON */
+				printf("{\"acc\":{\"x\":%f,\"y\":%f,\"z\":%f},"
+				       "{\"gyr\":{\"x\":%f,\"y\":%f,\"z\":%f},"
+				       "{\"mag\":{\"x\":%f,\"y\":%f,\"z\":%f},"
+				       "\"heading\":%f,\"pitch\":%f,\"roll\":%f}\n",
+				       acc[0],acc[1],acc[2], gyr[0],gyr[1],gyr[2],
+				       mag[0],mag[1],mag[2], RAD(hdg), pitch, roll);
+			} else {
+				print_formatted_values(acc, gyr, mag, "Scaled Values");
+				printf("X/Y:     % 9.3f | % 9.3f\n", mx, my);
+				printf("Heading: % 6.1f\n", hdg);
+				printf("Pitch:   % 6.1f\n", DEG(pitch));
+				printf("Roll:    % 6.1f\n", DEG(roll));
+			}
 		}
 
 		nanosleep(&sleep, NULL);
 	}
 
-	/* Move the cursor to line 14. Add 7 for every call to
-	 * print_formatted_values.
-	 */
-	printf("\033[14;0H\n");
+	if(!use_json) {
+		/* Move the cursor to line 17. Add 7 for every call to
+		 * print_formatted_values.
+		 */
+		printf("\033[17;0H\n");
+	}
 
 done:
 	exit(EXIT_SUCCESS);

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
 #include "dcm.h"
@@ -28,6 +29,21 @@ double omega[3] = {0};
 double roll_pitch_error[3] = {0};
 double yaw_error[3] = {0};
 double course_error = 180.0;
+
+void print_matrix(double m[3][3], char *title) {
+	int i = 0;
+
+	printf("%s\n", title);
+
+	for(;i<3;++i) {
+		printf("%7.3f %7.3f %7.3f\n\n", m[i][0], m[i][1], m[i][2]);
+	}
+}
+
+void print_vector(double m[3], char *title) {
+	printf("%s\n", title);
+	printf("%7.3f %7.3f %7.3f\n\n", m[0], m[1], m[2]);
+}
 
 int renorm(double *in) {
 	if(*in < 1.5625 && *in > 0.64) { /* TODO: WTF are these magic numbers?
@@ -143,18 +159,27 @@ void adjust_accel(double ground_speed) {
 }
 
 void update_matrix(int (*read_acc)(double *), int (*read_gyr)(double *)) {
-	int x = 0, y = 0;
-
 	read_acc(acc_vector);
 	read_gyr(gyro_vector);
+
+	memset(omega_vector, 0, sizeof(omega_vector));
+
+	print_vector(acc_vector, "Accelerometer");
+	print_vector(gyro_vector, "Gyroscope");
 
 	gyro_vector[0] = gyro_scaled_x(gyro_vector[0]); /* gyro x roll */
 	gyro_vector[1] = gyro_scaled_y(gyro_vector[1]); /* gyro y pitch */
 	gyro_vector[2] = gyro_scaled_z(gyro_vector[2]); /* gyro Z yaw */
 
+	print_vector(gyro_vector, "Gyroscope Scaled");
+
 	vector_add3(gyro_vector, omega_i, omega); /* add proportional component
 						   */
+	print_vector(omega, "Gyroscope + Proportional");
+
 	vector_add3(omega, omega_p, omega_vector); /* add integral term */
+
+	print_vector(omega_vector, "Gyroscope + Proportional + Integral");
 
 	/* TODO: Inject ground speed */
 	adjust_accel(0); /* remove centrifugal acceleration */
@@ -169,13 +194,15 @@ void update_matrix(int (*read_acc)(double *), int (*read_gyr)(double *)) {
 	out_matrix[2][1] =  G_dt * omega_vector[0]; /*  x */
 	out_matrix[2][2] = 0;
 
+	print_matrix(out_matrix, "Output");
+
 	matrix_multiply3(dcm_matrix, out_matrix, temp); /* a*b=c */
 
-	for(; x<3; ++x) {
-		for(; y<3; ++y) {
-			dcm_matrix[x][y] += temp[x][y];
-		}
-	}
+	print_matrix(temp, "Output + DCM");
+
+	matrix_add3(dcm_matrix, temp, dcm_matrix);
+
+	print_matrix(dcm_matrix, "Output + DCM + DCM");
 }
 
 void euler_angles(double *m) {
